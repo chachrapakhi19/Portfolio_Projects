@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The DoomsDay Survivor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nosifer&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: #000 url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=1470&q=80') no-repeat center center fixed;
+      background-size: cover;
+      overflow: hidden;
+      color: white;
+    }
+    .container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,0.7);
+      text-align: center;
+    }
+    h1 {
+      font-family: 'Nosifer', cursive;
+      font-size: 3em;
+      color: #ff4444;
+    }
+    .question-box {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      margin-top: 30px;
+    }
+    .question-box h2 {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin: 10px 0;
+      padding: 10px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    label:hover {
+      background: rgba(255,255,255,0.4);
+    }
+    input[type="radio"] {
+      margin-right: 10px;
+    }
+    .game-over {
+      font-size: 2em;
+      color: #ff4444;
+      animation: blink 1s infinite;
+      margin-top: 20px;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .result {
+      font-size: 1.5em;
+      color: #ffaaaa;
+      margin-top: 20px;
+    }
+    .timer {
+      font-size: 1.2em;
+      color: #00ffff;
+      margin-top: 10px;
+    }
+    .restart-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background: #ff4444;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+    }
+    .restart-btn:hover {
+      background: #ff0000;
+    }
+    audio {
+      display: none;
+    }
+    a {
+      color: #00ffff;
+    }
+  </style>
+</head>
+<body>
+  <audio id="bgm" autoplay loop>
+    <source src="file:///Users/pakhichachra/Desktop/DAN-C/creepy_music.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="container">
+    <h1>The DoomsDay Survivor</h1>
+    <div class="timer" id="timer">Time left: 01:29</div>
+    <div class="question-box" id="questionBox"></div>
+    <div class="result" id="result"></div>
+    <div id="recommendations"></div>
+    <button class="restart-btn" id="restartBtn" onclick="restartGame()" style="display:none;">🔁 Restart</button>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        category: "🌍 Transport",
+        choices: [
+          { text: "🚗 I drive a petrol/diesel car every day", value: 60 },
+          { text: "🚌 I use public transport or carpool mostly", value: 30 },
+          { text: "🚴‍♂️ I mostly walk, cycle or use clean transport", value: 10 }
+        ]
+      },
+      {
+        category: "💡 Home Energy",
+        choices: [
+          { text: "🔥 I use AC/heater and geyser daily", value: 50 },
+          { text: "⚡ I use efficient appliances consciously", value: 30 },
+          { text: "☀️ I use solar energy and rarely use power-hungry devices", value: 10 }
+        ]
+      },
+      {
+        category: "🍽️ Food Habits",
+        choices: [
+          { text: "🥩 I eat red meat and dairy daily", value: 40 },
+          { text: "🥗 I eat meat occasionally", value: 20 },
+          { text: "🌱 I eat fully plant-based or vegan", value: 10 }
+        ]
+      },
+      {
+        category: "🛍️ Shopping",
+        choices: [
+          { text: "🛒 I frequently shop online and follow fast fashion", value: 30 },
+          { text: "♻️ I shop occasionally and try second-hand", value: 15 },
+          { text: "🧘‍♂️ I'm minimalist, rarely buy anything new", value: 5 }
+        ]
+      },
+      {
+        category: "🚿 Water Use",
+        choices: [
+          { text: "🛁 I take long showers and wash car weekly", value: 20 },
+          { text: "🧼 I conserve water when I can", value: 10 },
+          { text: "💧 I reuse water and track usage", value: 5 }
+        ]
+      },
+      {
+        category: "🏠 Housing",
+        choices: [
+          { text: "🏢 I live in a large, inefficient house", value: 40 },
+          { text: "🏘️ I live in an apartment with average insulation", value: 25 },
+          { text: "🏡 I live in a shared or eco-friendly home", value: 10 }
+        ]
+      }
+    ];
+
+    const tips = {
+      "🌍 Transport": {
+        tip: "Try biking or using electric public transport.",
+        link: "https://www.transportenvironment.org/",
+        fact: "Transport accounts for around 25% of global CO2 emissions."
+      },
+      "💡 Home Energy": {
+        tip: "Consider switching to solar or LED bulbs.",
+        link: "https://www.energy.gov/energysaver/energy-saver",
+        fact: "Heating and cooling accounts for 50% of energy use in homes."
+      },
+      "🍽️ Food Habits": {
+        tip: "Reducing red meat consumption drastically lowers your carbon footprint.",
+        link: "https://ourworldindata.org/environmental-impacts-of-food",
+        fact: "Beef has over 60x the emissions of vegetables per kg."
+      },
+      "🛍️ Shopping": {
+        tip: "Embrace slow fashion and second-hand goods.",
+        link: "https://www.greenpeace.org/international/story/7115/fast-fashion-environmental-impact/",
+        fact: "Fashion emits more carbon than international flights and shipping combined."
+      },
+      "🚿 Water Use": {
+        tip: "Shorten your showers and fix leaks.",
+        link: "https://www.epa.gov/watersense",
+        fact: "A 10-minute shower can use up to 100 liters of water."
+      },
+      "🏠 Housing": {
+        tip: "Insulate your home or share space to reduce impact.",
+        link: "https://www.iea.org/topics/buildings",
+        fact: "Buildings account for over 30% of energy use globally."
+      }
+    };
+
+    const budgetLimit = 167;
+    let total = 0;
+    let currentQuestion = 0;
+    let timerInterval;
+    let timeLeft = 89;
+    const categoryScores = {};
+
+    function showQuestion(index) {
+      if (index >= questions.length) {
+        showResult(false);
+        return;
+      }
+      const q = questions[index];
+      let html = `<h2>${q.category}</h2>`;
+      q.choices.forEach((choice, i) => {
+        html += `<label><input type="radio" name="q${index}" value="${choice.value}" onclick="selectOption(${choice.value}, '${q.category}')"> ${choice.text}</label>`;
+      });
+      document.getElementById("questionBox").innerHTML = html;
+    }
+
+    function selectOption(value, category) {
+      total += value;
+      if (value >= 30) {
+        timeLeft = Math.max(0, timeLeft - 30);
+        updateTimerDisplay();
+      }
+      categoryScores[category] = (categoryScores[category] || 0) + value;
+      currentQuestion++;
+      if (total > budgetLimit) {
+        gameOver("💀 Game Over 💀<br><br>You can't afford more carbon!<br><em>\"Do what you need, not what you want.\"</em>");
+      } else {
+        showQuestion(currentQuestion);
+      }
+    }
+
+    function updateTimerDisplay() {
+      const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+      const seconds = String(timeLeft % 60).padStart(2, '0');
+      document.getElementById("timer").textContent = `Time left: ${minutes}:${seconds}`;
+    }
+
+    function startTimer() {
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          gameOver("⏰ Time’s up! DoomsDay has arrived!");
+        }
+      }, 1000);
+    }
+
+    function gameOver(message) {
+      clearInterval(timerInterval);
+      document.getElementById("bgm").pause();
+      document.getElementById("questionBox").innerHTML = `<div class="game-over">${message}</div>`;
+      showResult(true);
+    }
+
+    function showResult(gameOver = false) {
+      let resultText = `<strong>Total Carbon Score:</strong> ${total}<br><strong>Recommended monthly limit:</strong> ${budgetLimit} kgCO₂`;
+
+      // Snide comment based on score
+      let comment = "";
+      if (total <= 60) {
+        comment = "👏 Not bad... You might just survive the apocalypse (and smugly judge others).";
+      } else if (total <= 120) {
+        comment = "😐 You're walking a thin line... Mother Earth is watching.";
+      } else if (total <= budgetLimit) {
+        comment = "😬 That was close. Maybe try not burning the planet *next* time?";
+      } else {
+        comment = "🔥 Wow. You *are* the apocalypse.";
+      }
+
+      document.getElementById("result").innerHTML = resultText + `<br><br><em>${comment}</em>`;
+      document.getElementById("restartBtn").style.display = "inline-block";
+
+      let recText = "<h3>💡 Personalized Tips:</h3><ul>";
+      for (const [cat, val] of Object.entries(categoryScores)) {
+        if (val > 40 && tips[cat]) {
+          recText += `<li><strong>${cat}</strong>: ${tips[cat].tip}<br><em>${tips[cat].fact}</em><br><a href='${tips[cat].link}' target='_blank'>Learn more</a></li>`;
+        }
+      }
+      recText += "</ul>";
+      document.getElementById("recommendations").innerHTML = recText;
+    }
+
+    function restartGame() {
+      location.reload();
+    }
+
+    showQuestion(currentQuestion);
+    startTimer();
+  </script>
+</body>
+</html>
